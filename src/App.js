@@ -63,6 +63,11 @@ export default function App() {
   const [dhihaehSession, setDhihaehSession] = useState(null);
   const [dhihaehRoomState, setDhihaehRoomState] = useState(null);
   const [dhihaehGameState, setDhihaehGameState] = useState(null);
+  // Chat listener lives at this top level (always active from socket init)
+  // rather than inside ChatPanel — registering it only on mount caused a
+  // race where the server's chatHistory could arrive before the panel
+  // mounted and was dropped, clearing the log on refresh/rejoin.
+  const [dhihaehChatMessages, setDhihaehChatMessages] = useState([]);
 
   // ── Init Digu socket ─────────────────────────────────────────
   useEffect(() => {
@@ -112,6 +117,8 @@ export default function App() {
     socket.on('hukunSelected', () => {});
     socket.on('hukunRevealed', () => {});
     socket.on('roundComplete', () => {});
+    socket.on('chatHistory', (history) => setDhihaehChatMessages(history || []));
+    socket.on('chatMessage', (message) => setDhihaehChatMessages(prev => [...prev, message]));
 
     // The moment we know the connection dropped, hide the stale board
     // immediately — don't wait for the reconnect handshake to finish.
@@ -137,6 +144,7 @@ export default function App() {
             setDhihaehSession(null);
             setDhihaehGameState(null);
             setDhihaehRoomState(null);
+            setDhihaehChatMessages([]);
           }
           setDhihaehRejoining(false);
         });
@@ -175,6 +183,8 @@ export default function App() {
       socket.off('hukunSelected');
       socket.off('hukunRevealed');
       socket.off('roundComplete');
+      socket.off('chatHistory');
+      socket.off('chatMessage');
       socket.disconnect();
     };
   }, []);
@@ -221,6 +231,7 @@ export default function App() {
     setDhihaehSession(null);
     setDhihaehRoomState(null);
     setDhihaehGameState(null);
+    setDhihaehChatMessages([]);
     localStorage.removeItem('thaas_dhihaeh_session');
     setGame(null);
   }
@@ -293,6 +304,7 @@ export default function App() {
       <ChatPanel
         socket={socket}
         playerId={dhihaehSession.playerId}
+        messages={dhihaehChatMessages}
         onSend={(text, cb) => socket.emit('sendChatMessage', { text }, cb)}
       />
     );

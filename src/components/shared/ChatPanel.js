@@ -5,36 +5,32 @@ function formatTime(ts) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function ChatPanel({ socket, playerId, onSend }) {
+// `messages` is controlled by the parent (App.js), which keeps a single
+// always-on socket listener for 'chatHistory'/'chatMessage' registered from
+// the moment the socket connects — not tied to this component's mount.
+// That avoids a race where history sent by the server during rejoin could
+// arrive before this panel mounted and get silently dropped.
+export default function ChatPanel({ socket, playerId, messages = [], onSend }) {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
   const [unread, setUnread] = useState(0);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const listRef = useRef(null);
+  const prevLenRef = useRef(messages.length);
   const openRef = useRef(open);
   openRef.current = open;
 
+  // Track unread count as new messages arrive while the panel is closed
   useEffect(() => {
-    if (!socket) return;
-
-    function handleHistory(history) {
-      setMessages(history || []);
-    }
-    function handleMessage(message) {
-      setMessages(prev => [...prev, message]);
-      if (!openRef.current && message.playerId !== playerId) {
-        setUnread(prev => prev + 1);
+    if (messages.length > prevLenRef.current) {
+      const newOnes = messages.slice(prevLenRef.current);
+      if (!openRef.current) {
+        const fromOthers = newOnes.filter(m => m.playerId !== playerId).length;
+        if (fromOthers > 0) setUnread(prev => prev + fromOthers);
       }
     }
-
-    socket.on('chatHistory', handleHistory);
-    socket.on('chatMessage', handleMessage);
-    return () => {
-      socket.off('chatHistory', handleHistory);
-      socket.off('chatMessage', handleMessage);
-    };
-  }, [socket, playerId]);
+    prevLenRef.current = messages.length;
+  }, [messages, playerId]);
 
   // Auto-scroll to bottom on new message when open
   useEffect(() => {
@@ -63,30 +59,35 @@ export default function ChatPanel({ socket, playerId, onSend }) {
 
   if (!socket) return null;
 
+  // Anchored above the hand/action area instead of the very bottom corner,
+  // so it sits in empty space on mobile rather than over the cards.
+  const ICON_BOTTOM = '150px';
+  const PANEL_BOTTOM = '194px';
+
   return (
     <>
-      {/* Floating bubble */}
+      {/* Small toggle icon */}
       <button
         onClick={toggleOpen}
         style={{
-          position: 'fixed', bottom: '16px', left: '16px', zIndex: 900,
-          width: '52px', height: '52px', borderRadius: '50%',
-          background: 'var(--accent)', color: '#000', border: 'none',
+          position: 'fixed', bottom: ICON_BOTTOM, left: '8px', zIndex: 900,
+          width: '34px', height: '34px', borderRadius: '50%',
+          background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '22px', cursor: 'pointer',
-          boxShadow: '0 6px 18px rgba(0,0,0,0.4)'
+          fontSize: '15px', cursor: 'pointer', padding: 0,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.35)'
         }}
       >
         💬
         {unread > 0 && (
           <span style={{
-            position: 'absolute', top: '-4px', right: '-4px',
-            minWidth: '20px', height: '20px', borderRadius: '10px',
-            background: 'var(--red)', color: '#fff', fontSize: '11px', fontWeight: 800,
+            position: 'absolute', top: '-3px', right: '-3px',
+            minWidth: '15px', height: '15px', borderRadius: '8px',
+            background: 'var(--red)', color: '#fff', fontSize: '9px', fontWeight: 800,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '0 5px', border: '2px solid var(--bg)'
+            padding: '0 3px', border: '1.5px solid var(--bg)'
           }}>
-            {unread > 99 ? '99+' : unread}
+            {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
@@ -94,20 +95,20 @@ export default function ChatPanel({ socket, playerId, onSend }) {
       {/* Panel */}
       {open && (
         <div style={{
-          position: 'fixed', bottom: '78px', left: '16px', zIndex: 900,
-          width: 'min(320px, calc(100vw - 32px))', height: 'min(420px, calc(100vh - 140px))',
+          position: 'fixed', bottom: PANEL_BOTTOM, left: '8px', zIndex: 900,
+          width: 'min(300px, calc(100vw - 16px))', height: 'min(380px, calc(100vh - 220px))',
           background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           boxShadow: '0 12px 32px rgba(0,0,0,0.5)'
         }}>
           <div style={{
-            padding: '12px 14px', borderBottom: '1px solid var(--border)',
+            padding: '10px 12px', borderBottom: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0
           }}>
-            <span style={{ fontSize: '12px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', fontWeight: 700 }}>
+            <span style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', fontWeight: 700 }}>
               Room Chat
             </span>
-            <span onClick={() => setOpen(false)} style={{ cursor: 'pointer', color: 'var(--muted)', fontSize: '16px', lineHeight: 1 }}>✕</span>
+            <span onClick={() => setOpen(false)} style={{ cursor: 'pointer', color: 'var(--muted)', fontSize: '15px', lineHeight: 1 }}>✕</span>
           </div>
 
           <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
