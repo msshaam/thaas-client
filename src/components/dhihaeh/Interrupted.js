@@ -6,17 +6,10 @@ const TEAM_COLORS = { 1: '#3a7bd5', 2: '#e05c3a' };
 export default function Interrupted({ gameState, roomState, session, socket, onBack }) {
   const [error, setError] = useState('');
   const [confirmingLeave, setConfirmingLeave] = useState(false);
-  const isOwner = session.playerId === roomState?.ownerId;
 
   const teamName1 = roomState?.teamNames?.[1] || gameState?.teamNames?.[1] || 'Team 1';
   const teamName2 = roomState?.teamNames?.[2] || gameState?.teamNames?.[2] || 'Team 2';
   const snapshot = gameState?.scoreSnapshot;
-
-  function handleBackToTeamSelect() {
-    socket.emit('backToTeamSelect', (res) => {
-      if (!res?.success) setError(res?.error || 'Could not go back to team select');
-    });
-  }
 
   function handleLeave() {
     socket.emit('leaveRoom', (res) => {
@@ -69,29 +62,15 @@ export default function Interrupted({ gameState, roomState, session, socket, onB
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {isOwner ? (
-            <button
-              onClick={handleBackToTeamSelect}
-              style={{
-                width: '100%', padding: '14px', borderRadius: '10px',
-                fontSize: '15px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase',
-                background: 'var(--accent)', color: '#000', border: 'none', cursor: 'pointer'
-              }}
-            >
-              Back to Team Select
-            </button>
-          ) : (
-            <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--muted)', padding: '8px 0' }}>
-              Waiting for the host to continue…
-            </div>
-          )}
-
+          <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--muted)', padding: '4px 0 8px' }}>
+            Start a new room to play again.
+          </div>
           <button
             onClick={() => setConfirmingLeave(true)}
             style={{
-              width: '100%', padding: '12px', borderRadius: '10px',
-              fontSize: '13px', fontWeight: 700, letterSpacing: '1px',
-              background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer'
+              width: '100%', padding: '14px', borderRadius: '10px',
+              fontSize: '15px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase',
+              background: 'var(--accent)', color: '#000', border: 'none', cursor: 'pointer'
             }}
           >
             Leave Room
