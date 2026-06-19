@@ -1,14 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import ModalShell from './ModalShell';
-import InstallBanner from './InstallBanner';
-import { CloseIcon, ShareIcon } from './Icons';
+import { CloseIcon } from './Icons';
 
 const normalizeRoomCode = (value) => value.trim().toUpperCase();
 const isRoomCode = (value) => /^[A-HJ-NP-Z2-9]{6}$/.test(value);
 const pillButton = { borderRadius: 999 };
 const normalizeName = (value) => value.toUpperCase();
-const getCapturedInstallPrompt = () => window.__diguInstallPrompt || null;
 
 export default function Lobby({ socket, onJoined, onBack }) {
   const [name, setName] = useState('');
@@ -18,20 +16,9 @@ export default function Lobby({ socket, onJoined, onBack }) {
   const [loading, setLoading] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanError, setScanError] = useState('');
-  const [installDismissed, setInstallDismissed] = useState(false);
-  const [iosInstallOpen, setIosInstallOpen] = useState(false);
-  const [androidInstallOpen, setAndroidInstallOpen] = useState(false);
-  const [hasInstallPrompt, setHasInstallPrompt] = useState(() => Boolean(getCapturedInstallPrompt()));
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const scannerRef = useRef(null);
   const scannerRegionId = 'digu-qr-scanner';
-  const deferredInstallPromptRef = useRef(null);
-
-  const isStandalone = window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator.standalone;
-  const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
-  const isAndroid = /android/i.test(window.navigator.userAgent);
-  const isSafari = /^((?!chrome|android).)*safari/i.test(window.navigator.userAgent);
-  const canShowIosInstall = isIos && isSafari && !isStandalone;
 
   useEffect(() => {
     if (!scannerOpen) return undefined;
@@ -88,32 +75,6 @@ export default function Lobby({ socket, onJoined, onBack }) {
   }, [scannerOpen]);
 
   useEffect(() => {
-    const syncCapturedInstallPrompt = () => {
-      const capturedPrompt = getCapturedInstallPrompt();
-      if (!capturedPrompt) return;
-
-      deferredInstallPromptRef.current = capturedPrompt;
-      setHasInstallPrompt(true);
-    };
-
-    const handleBeforeInstallPrompt = (event) => {
-      event.preventDefault();
-      window.__diguInstallPrompt = event;
-      window.__diguInstallPromptSeen = true;
-      deferredInstallPromptRef.current = event;
-      setHasInstallPrompt(true);
-    };
-
-    syncCapturedInstallPrompt();
-    window.addEventListener('digu-beforeinstallprompt', syncCapturedInstallPrompt);
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => {
-      window.removeEventListener('digu-beforeinstallprompt', syncCapturedInstallPrompt);
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  useEffect(() => {
     if (!window.visualViewport) return undefined;
 
     const updateKeyboardState = () => {
@@ -130,30 +91,6 @@ export default function Lobby({ socket, onJoined, onBack }) {
       window.visualViewport.removeEventListener('scroll', updateKeyboardState);
     };
   }, []);
-
-  const openInstall = async () => {
-    if (canShowIosInstall) {
-      setIosInstallOpen(true);
-      return;
-    }
-
-    const promptEvent = deferredInstallPromptRef.current || getCapturedInstallPrompt();
-    if (!promptEvent) {
-      if (isAndroid) setAndroidInstallOpen(true);
-      return;
-    }
-
-    promptEvent.prompt();
-    try {
-      await promptEvent.userChoice;
-    } finally {
-      deferredInstallPromptRef.current = null;
-      window.__diguInstallPrompt = null;
-      window.__diguInstallPromptSeen = false;
-      setHasInstallPrompt(false);
-      setInstallDismissed(true);
-    }
-  };
 
   const handleCreate = () => {
     if (!name.trim()) return setError('Enter your name.');
@@ -357,102 +294,6 @@ export default function Lobby({ socket, onJoined, onBack }) {
             </p>
           </div>
         </ModalShell>
-      )}
-      {iosInstallOpen && (
-        <ModalShell onClose={() => setIosInstallOpen(false)} maxWidth={520}>
-          <div style={{ textTransform: 'uppercase' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <img src="/app-icon-192.png" alt="" width="52" height="52" style={{ borderRadius: 14, background: '#0a0f1e' }} />
-                <div>
-                  <h2 style={{ color: '#c9a84c', fontSize: 22, fontWeight: 800 }}>Install Digu</h2>
-                </div>
-              </div>
-              <button
-                onClick={() => setIosInstallOpen(false)}
-                aria-label="Close install instructions"
-                style={{ background: 'transparent', border: 'none', borderRadius: 999, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <CloseIcon />
-              </button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, color: '#0a0f1e', fontSize: 15, lineHeight: 1.45 }}>
-              {[
-                ['1', <>Tap the <strong>Share</strong> button in Safari</>],
-                ['2', <>Scroll down and tap <strong>Add to Home Screen</strong></>],
-                ['3', <>Tap <strong>Add</strong> to confirm</>],
-              ].map(([step, text]) => (
-                <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(76,175,136,0.12)', color: '#4caf88', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>
-                    {step}
-                  </div>
-                  <div style={{ color: '#e8e0d4' }}>{text}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, color: '#8a9bb5', fontSize: 12 }}>
-                <ShareIcon color="#8a9bb5" />
-                <span>Safari share icon</span>
-              </div>
-            </div>
-            <button
-              onClick={() => setIosInstallOpen(false)}
-              style={{ marginTop: 18, width: '100%', padding: '14px 16px', background: '#fff', border: '1px solid rgba(30,45,69,0.2)', color: '#0a0f1e', fontWeight: 700, fontSize: 16, ...pillButton }}
-            >
-              Got It
-            </button>
-          </div>
-        </ModalShell>
-      )}
-      {androidInstallOpen && (
-        <ModalShell onClose={() => setAndroidInstallOpen(false)} maxWidth={520}>
-          <div style={{ textTransform: 'uppercase' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <img src="/app-icon-192.png" alt="" width="52" height="52" style={{ borderRadius: 14, background: '#0a0f1e' }} />
-                <h2 style={{ color: '#c9a84c', fontSize: 22, fontWeight: 800 }}>Install Digu</h2>
-              </div>
-              <button
-                onClick={() => setAndroidInstallOpen(false)}
-                aria-label="Close install instructions"
-                style={{ background: 'transparent', border: 'none', borderRadius: 999, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <CloseIcon />
-              </button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, color: '#e8e0d4', fontSize: 15, lineHeight: 1.45 }}>
-              {[
-                ['1', <>Tap the browser <strong>menu</strong></>],
-                ['2', <>Choose <strong>Install App</strong> or <strong>Add to Home Screen</strong></>],
-                ['3', <>Confirm to install <strong>Digu</strong></>],
-              ].map(([step, text]) => (
-                <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(76,175,136,0.12)', color: '#4caf88', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>
-                    {step}
-                  </div>
-                  <div>{text}</div>
-                </div>
-              ))}
-            </div>
-            <p style={{ color: '#8a9bb5', fontSize: 11, textAlign: 'center', marginTop: 18 }}>
-              Local network links sometimes do not show the automatic install prompt.
-            </p>
-            <button
-              onClick={() => setAndroidInstallOpen(false)}
-              style={{ marginTop: 16, width: '100%', padding: '14px 16px', background: '#fff', border: '1px solid rgba(30,45,69,0.2)', color: '#0a0f1e', fontWeight: 700, fontSize: 16, ...pillButton }}
-            >
-              Got It
-            </button>
-          </div>
-        </ModalShell>
-      )}
-      {!installDismissed && !isStandalone && (hasInstallPrompt || canShowIosInstall || isAndroid) && (
-        <InstallBanner
-          iosMode={canShowIosInstall}
-          onInstall={openInstall}
-          onDismiss={() => setInstallDismissed(true)}
-        />
       )}
     </div>
   );
