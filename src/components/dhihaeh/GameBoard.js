@@ -619,7 +619,7 @@ export default function GameBoard({ gameState, session, roomState, socket }) {
           <div style={{ fontSize: '13px', color: 'var(--muted)', textAlign: 'center', maxWidth: '260px', lineHeight: 1.6 }}>
             {hukunRevealAnim.isP2
               ? 'You must play the Hukun card this round'
-              : "Hukun card has been added to the selector's hand"}
+              : `Hukun card has been added to ${players[1]?.name || "the selector"}'s hand`}
           </div>
           <button
             onClick={() => setHukunRevealAnim(null)}

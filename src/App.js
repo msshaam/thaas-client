@@ -42,6 +42,7 @@ export default function App() {
 
   // ── Dhihaeh state ─────────────────────────────────────────────
   const dhihaehSocketRef = useRef(null);
+  const [dhihaehRejoining, setDhihaehRejoining] = useState(false);
   const [dhihaehSession, setDhihaehSession] = useState(null);
   const [dhihaehRoomState, setDhihaehRoomState] = useState(null);
   const [dhihaehGameState, setDhihaehGameState] = useState(null);
@@ -101,6 +102,7 @@ export default function App() {
       if (!saved) return;
       try {
         const sess = JSON.parse(saved);
+        setDhihaehRejoining(true);
         socket.emit('rejoinRoom', { playerId: sess.playerId, roomCode: sess.roomCode }, (res) => {
           if (res.success) {
             setDhihaehSession(sess);
@@ -111,15 +113,17 @@ export default function App() {
             setDhihaehGameState(null);
             setDhihaehRoomState(null);
           }
+          setDhihaehRejoining(false);
         });
       } catch {
         localStorage.removeItem('thaas_dhihaeh_session');
+        setDhihaehRejoining(false);
       }
     });
 
     // Connect if we have a saved session
     const saved = localStorage.getItem('thaas_dhihaeh_session');
-    if (saved) socket.connect();
+    if (saved) { setDhihaehRejoining(true); socket.connect(); }
 
     return () => {
       socket.off('connect');
@@ -225,6 +229,16 @@ export default function App() {
   if (game === 'dhihaeh') {
     const socket = dhihaehSocketRef.current;
 
+    // Only show this if we're actively rejoining a saved session
+    if (dhihaehRejoining) {
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0f1e', color: '#8a9bb5', gap: 16 }}>
+          <div style={{ fontSize: 40 }}>🃏</div>
+          <p style={{ fontSize: 14, textTransform: 'uppercase', animation: 'pulse 1.5s infinite' }}>Loading game…</p>
+        </div>
+      );
+    }
+
     if (!dhihaehSession) {
       return <DhihaehLobby socket={socket} onJoined={handleDhihaehJoined} onBack={goHome} />;
     }
@@ -243,8 +257,9 @@ export default function App() {
     }
 
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0f1e', color: '#8a9bb5' }}>
-        Connecting…
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0f1e', color: '#8a9bb5', gap: 16 }}>
+        <div style={{ fontSize: 40 }}>🃏</div>
+        <p style={{ fontSize: 14, textTransform: 'uppercase', animation: 'pulse 1.5s infinite' }}>Connecting…</p>
       </div>
     );
   }
