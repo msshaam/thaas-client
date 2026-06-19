@@ -41,6 +41,8 @@ export default function App() {
   const [diGuState, setDigUState] = useState(null);
 
   // ── Dhihaeh state ─────────────────────────────────────────────
+  // Mirrors Digu exactly: while rejoining, we show a loading screen and
+  // wait for fresh server state — no stale "where I left off" flash.
   const dhihaehSocketRef = useRef(null);
   const [dhihaehRejoining, setDhihaehRejoining] = useState(false);
   const [dhihaehSession, setDhihaehSession] = useState(null);
@@ -96,7 +98,8 @@ export default function App() {
     socket.on('hukunRevealed', () => {});
     socket.on('roundComplete', () => {});
 
-    // Rejoin on every connect (covers refresh + reconnect after drop)
+    // Rejoin on every connect (covers refresh + reconnect after drop).
+    // We deliberately show a loading screen during this — no stale board.
     socket.on('connect', () => {
       const saved = localStorage.getItem('thaas_dhihaeh_session');
       if (!saved) return;
@@ -229,12 +232,14 @@ export default function App() {
   if (game === 'dhihaeh') {
     const socket = dhihaehSocketRef.current;
 
-    // Only show this if we're actively rejoining a saved session
+    // Only show this if we're actively rejoining a saved session —
+    // hides any stale board so the player never sees "where they left off"
+    // before it silently updates. Matches Digu's behavior exactly.
     if (dhihaehRejoining) {
       return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0f1e', color: '#8a9bb5', gap: 16 }}>
           <div style={{ fontSize: 40 }}>🃏</div>
-          <p style={{ fontSize: 14, textTransform: 'uppercase', animation: 'pulse 1.5s infinite' }}>Loading game…</p>
+          <p style={{ fontSize: 14, textTransform: 'uppercase', animation: 'pulse 1.5s infinite' }}>Rejoining…</p>
         </div>
       );
     }
