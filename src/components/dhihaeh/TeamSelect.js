@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CustomDealPanel, isDebugMode } from './DebugPanel';
+import ConfirmDialog from '../digu/ConfirmDialog';
 
 
 const TEAM_COLORS = { 1: 'var(--team1)', 2: 'var(--team2)' };
@@ -91,11 +92,19 @@ export default function TeamSelect({ roomState, session, onBack, socket }) {
   // Local team name state, seeded from server (roomState.teamNames) when it arrives
   const [teamNames, setTeamNames] = useState({ 1: 'Team Blue', 2: 'Team Red' });
   const [editingTeam, setEditingTeam] = useState(null);
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
 
   const { canStart, team1, team2, ownerId, players } = roomState;
   const me = players.find(p => p.id === session.playerId);
   const myTeam = me?.team;
   const isOwner = session.playerId === ownerId;
+
+  function handleLeave() {
+    socket.emit('leaveRoom', (res) => {
+      if (!res?.success) setError(res?.error || 'Could not leave');
+      else onBack?.();
+    });
+  }
 
   // Sync team names from server when they change
   useEffect(() => {
@@ -229,11 +238,25 @@ export default function TeamSelect({ roomState, session, onBack, socket }) {
         {error && <div style={s.err}>{error}</div>}
 
         {onBack && (
-          <button onClick={onBack} style={{ padding: '10px 20px', borderRadius: '8px', fontSize: '13px', background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer' }}>
-            ← Back to Games
+          <button onClick={() => setConfirmingLeave(true)} style={{ padding: '10px 20px', borderRadius: '8px', fontSize: '13px', background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer' }}>
+            ← Leave Room
           </button>
         )}
       </div>
+
+      {confirmingLeave && (
+        <ConfirmDialog
+          title="Leave Room?"
+          message={isOwner
+            ? "You're the host — another player will take over hosting if you leave."
+            : "You'll be removed from this room."}
+          confirmLabel="Leave"
+          cancelLabel="Stay"
+          confirmTone="danger"
+          onConfirm={handleLeave}
+          onCancel={() => setConfirmingLeave(false)}
+        />
+      )}
 
       {isOwner && isDebugMode() && (
         <CustomDealPanel socket={socket} onError={setError} />

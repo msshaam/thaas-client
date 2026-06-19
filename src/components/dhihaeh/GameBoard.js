@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 import Card from './Card';
 import { ScorePatchPanel, isDebugMode } from './DebugPanel';
+import ConfirmDialog from '../digu/ConfirmDialog';
+import DisconnectVoteBanner from './DisconnectVoteBanner';
 
 const TEAM_COLORS = { 1: '#3a7bd5', 2: '#e05c3a' };
 
@@ -92,11 +94,11 @@ function FlyingCard({ card, from, to, hasTen, onDone }) {
   );
 }
 
-export default function GameBoard({ gameState, session, roomState, socket }) {
+export default function GameBoard({ gameState, session, roomState, socket, onBack }) {
   const {
     myHand: initialHand, players = [], seatIndex = 0, hukun, hukunRevealed, hukunSuit,
     leadSuit, roundCards = [], currentTurnSeat, score, roundsPlayed, gameResult,
-    status, nextDealerId, teamNames: gsTeamNames
+    status, nextDealerId, teamNames: gsTeamNames, disconnectVote
   } = gameState;
 
   const [hand, setHand] = useState(initialHand || []);
@@ -105,6 +107,9 @@ export default function GameBoard({ gameState, session, roomState, socket }) {
   const [flyingCards, setFlyingCards] = useState([]);
   const [hukunRevealAnim, setHukunRevealAnim] = useState(null);
   const [draggingToPlay, setDraggingToPlay] = useState(false);
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
+  const [voteLoading, setVoteLoading] = useState(false);
   const [, forceUpdate] = useState(0);
   const centreRef = useRef(null);
   const teamZoneRef1 = useRef(null);
@@ -334,6 +339,19 @@ export default function GameBoard({ gameState, session, roomState, socket }) {
     });
   }
 
+  function handleLeave() {
+    socket.emit('leaveRoom', (res) => {
+      if (!res?.success) setError(res?.error || 'Could not leave');
+      else onBack?.();
+    });
+  }
+
+  function handleEndGame() {
+    socket.emit('endCurrentGame', (res) => {
+      if (!res?.success) setError(res?.error || 'Could not end game');
+    });
+  }
+
   // Safety guard — if essential data isn't ready yet, show nothing rather than crash
   if (!players.length) {
     return (
@@ -356,7 +374,25 @@ export default function GameBoard({ gameState, session, roomState, socket }) {
         <div style={{ fontSize: '11px', color: 'var(--muted)', letterSpacing: '2px' }}>
           ROOM <span style={{ color: 'var(--text)', fontWeight: 600 }}>{roomState?.code}</span>
         </div>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          {isOwner && status === 'playing' && (
+            <button onClick={() => setConfirmingEnd(true)} style={{
+              padding: '5px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, letterSpacing: '1px',
+              background: 'transparent', color: 'var(--red)', border: '1px solid var(--red)', cursor: 'pointer'
+            }}>
+              End Game
+            </button>
+          )}
+          <button onClick={() => setConfirmingLeave(true)} style={{
+            padding: '5px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, letterSpacing: '1px',
+            background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer'
+          }}>
+            Leave
+          </button>
+        </div>
       </div>
+
+      <DisconnectVoteBanner disconnectVote={disconnectVote} socket={socket} loading={voteLoading} setLoading={setVoteLoading} setError={setError} />
 
       {/* Team score bars with pile chips */}
       <div style={{ display: 'flex', gap: '6px', padding: '7px 10px', background: 'var(--surface)', flexShrink: 0 }}>
@@ -748,6 +784,30 @@ export default function GameBoard({ gameState, session, roomState, socket }) {
         <div style={{ position: 'fixed', bottom: '8px', right: '8px', zIndex: 600, maxWidth: '320px' }}>
           <ScorePatchPanel socket={socket} />
         </div>
+      )}
+
+      {confirmingLeave && (
+        <ConfirmDialog
+          title="Leave Game?"
+          message="The current round will be interrupted for everyone since Dhihaeh needs exactly 4 players."
+          confirmLabel="Leave"
+          cancelLabel="Stay"
+          confirmTone="danger"
+          onConfirm={handleLeave}
+          onCancel={() => setConfirmingLeave(false)}
+        />
+      )}
+
+      {confirmingEnd && (
+        <ConfirmDialog
+          title="End Game?"
+          message="This will end the current game for everyone in the room."
+          confirmLabel="End Game"
+          cancelLabel="Cancel"
+          confirmTone="danger"
+          onConfirm={() => { setConfirmingEnd(false); handleEndGame(); }}
+          onCancel={() => setConfirmingEnd(false)}
+        />
       )}
 
       <style>{`

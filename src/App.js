@@ -15,6 +15,7 @@ import DhihaehLobby from './components/dhihaeh/Lobby';
 import TeamSelect from './components/dhihaeh/TeamSelect';
 import HukunSelect from './components/dhihaeh/HukunSelect';
 import DhihaehGameBoard from './components/dhihaeh/GameBoard';
+import Interrupted from './components/dhihaeh/Interrupted';
 
 const DIGU_SERVER   = process.env.REACT_APP_DIGU_SERVER_URL   || 'http://localhost:3001';
 const DHIHAEH_SERVER = process.env.REACT_APP_DHIHAEH_SERVER_URL || 'http://localhost:3002';
@@ -287,10 +288,13 @@ export default function App() {
 
     if (dhihaehGameState) {
       if (dhihaehGameState.status === 'hukun') {
-        return <HukunSelect gameState={dhihaehGameState} session={dhihaehSession} socket={socket} />;
+        return <HukunSelect gameState={dhihaehGameState} session={dhihaehSession} roomState={dhihaehRoomState} socket={socket} onBack={handleDhihaehBack} />;
       }
       if (dhihaehGameState.status === 'playing' || dhihaehGameState.status === 'ended') {
-        return <DhihaehGameBoard gameState={dhihaehGameState} session={dhihaehSession} roomState={dhihaehRoomState} socket={socket} />;
+        return <DhihaehGameBoard gameState={dhihaehGameState} session={dhihaehSession} roomState={dhihaehRoomState} socket={socket} onBack={handleDhihaehBack} />;
+      }
+      if (dhihaehGameState.status === 'interrupted') {
+        return <Interrupted gameState={dhihaehGameState} session={dhihaehSession} roomState={dhihaehRoomState} socket={socket} onBack={handleDhihaehBack} />;
       }
     }
 
