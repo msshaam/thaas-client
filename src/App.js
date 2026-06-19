@@ -109,6 +109,13 @@ export default function App() {
       setDigUSession(null); setDigUState(null); setDigUChatMessages([]);
     });
 
+    // Connect immediately if we have a saved session (covers a hard
+    // refresh, where `game` is set synchronously from localStorage but
+    // selectGame() — which normally triggers connect() — never runs).
+    if (localStorage.getItem('thaas_digu_session')) {
+      socket.connect();
+    }
+
     return () => socket.disconnect();
   }, []);
 
