@@ -85,61 +85,16 @@ function getHandSlotIndex(pointerX, total, containerWidth, containerLeft = 0) {
 // Scaled card face-down
 function FaceDownCard({ width }) {
   const h = Math.round(width * 1.4);
-  const pad = Math.round(width * 0.08);
-  const navy = '#17256c';
-  const cream = '#f8f4ec';
   return (
     <div style={{
       width, height: h, borderRadius: Math.round(width * 0.13),
-      background: cream,
-      border: `2px solid ${navy}`,
+      backgroundImage: 'url(/images/card-back.webp)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      border: '1px solid rgba(0,0,0,0.4)',
       boxShadow: '0 8px 22px rgba(0,0,0,0.34)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
       flexShrink: 0,
-      position: 'relative',
-      overflow: 'hidden',
-      padding: pad,
-    }}>
-      <div style={{
-        position: 'absolute',
-        inset: pad,
-        border: `${Math.max(1, Math.round(width * 0.025))}px solid ${navy}`,
-        borderRadius: Math.round(width * 0.08),
-        background: `
-          linear-gradient(45deg, transparent 42%, ${cream} 43%, ${cream} 57%, transparent 58%) 0 0 / ${Math.round(width * 0.18)}px ${Math.round(width * 0.18)}px,
-          linear-gradient(-45deg, transparent 42%, ${cream} 43%, ${cream} 57%, transparent 58%) 0 0 / ${Math.round(width * 0.18)}px ${Math.round(width * 0.18)}px,
-          ${navy}
-        `,
-      }} />
-      <div style={{
-        position: 'absolute',
-        inset: Math.round(width * 0.17),
-        background: cream,
-        borderRadius: Math.round(width * 0.05),
-        border: `${Math.max(1, Math.round(width * 0.018))}px solid ${navy}`,
-      }} />
-      <svg
-        viewBox="0 0 100 140"
-        aria-hidden="true"
-        focusable="false"
-        style={{ position: 'absolute', inset: pad + Math.round(width * 0.08), width: `calc(100% - ${2 * (pad + Math.round(width * 0.08))}px)`, height: `calc(100% - ${2 * (pad + Math.round(width * 0.08))}px)` }}
-      >
-        <rect x="6" y="6" width="88" height="128" rx="5" fill={navy} />
-        <rect x="12" y="12" width="76" height="116" rx="3" fill={cream} />
-        <g fill={navy}>
-          <path d="M50 30 C35 12 18 22 22 42 C24 54 36 60 50 72 C64 60 76 54 78 42 C82 22 65 12 50 30Z" />
-          <path d="M50 110 C35 128 18 118 22 98 C24 86 36 80 50 68 C64 80 76 86 78 98 C82 118 65 128 50 110Z" />
-          <path d="M28 70 C16 56 18 38 36 30 C29 43 34 56 50 70 C34 84 29 97 36 110 C18 102 16 84 28 70Z" />
-          <path d="M72 70 C84 56 82 38 64 30 C71 43 66 56 50 70 C66 84 71 97 64 110 C82 102 84 84 72 70Z" />
-          <path d="M50 44 C56 55 66 62 79 65 C66 68 56 75 50 96 C44 75 34 68 21 65 C34 62 44 55 50 44Z" />
-          <circle cx="50" cy="70" r="9" fill={cream} />
-          <circle cx="50" cy="70" r="5" fill={navy} />
-          <circle cx="50" cy="70" r="2" fill={cream} />
-          <path d="M18 18 H82 V24 H18Z M18 116 H82 V122 H18Z" />
-          <path d="M18 28 H24 V112 H18Z M76 28 H82 V112 H76Z" />
-        </g>
-      </svg>
-    </div>
+    }} />
   );
 }
 
