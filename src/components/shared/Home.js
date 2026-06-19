@@ -9,7 +9,7 @@ const games = [
     color: '#c9a84c',
     bg: 'linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)',
     border: 'rgba(201,168,76,0.3)',
-    icon: '🃏',
+    icon: '/images/digu-icon.webp',
   },
   {
     id: 'dhihaeh',
@@ -19,7 +19,7 @@ const games = [
     color: '#3a7bd5',
     bg: 'linear-gradient(135deg, rgba(58,123,213,0.12) 0%, rgba(58,123,213,0.04) 100%)',
     border: 'rgba(58,123,213,0.3)',
-    icon: '🀄',
+    icon: '/images/dhihaeh-icon.webp',
   },
 ];
 
@@ -84,7 +84,9 @@ export default function Home({ onSelectGame }) {
             onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ fontSize: '36px', lineHeight: 1, flexShrink: 0 }}>{game.icon}</div>
+              <div style={{ width: '46px', height: '46px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+                <img src={game.icon} alt={`${game.name} icon`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: '20px', fontWeight: 800, color: game.color, marginBottom: '3px' }}>{game.name}</div>
                 <div style={{ fontSize: '12px', color: '#8a9bb5' }}>{game.desc}</div>

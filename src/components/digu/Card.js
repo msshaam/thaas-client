@@ -10,21 +10,16 @@ export default function Card({ card, selected, onClick, small, faceDown, style, 
           width: small ? 42 : 64,
           height: small ? 60 : 90,
           borderRadius: 8,
-          background: 'linear-gradient(135deg, #1a2a4a 0%, #0d1b33 100%)',
-          border: '2px solid #2a3f6a',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: small ? 16 : 22,
-          color: '#2a3f6a',
+          backgroundImage: 'url(/images/card-back.webp)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          border: '1px solid rgba(0,0,0,0.4)',
           flexShrink: 0,
           WebkitUserSelect: 'none',
           WebkitTouchCallout: 'none',
           ...style
         }}
-      >
-        ✦
-      </div>
+      />
     );
   }
 

@@ -2,39 +2,6 @@ import React from 'react';
 
 const RED_SUITS = ['♥', '♦'];
 
-function CardBack({ width, height, borderRadius }) {
-  const w = width, h = height;
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}
-      style={{ borderRadius, display: 'block' }}
-      xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
-          <line x1="0" y1="0" x2="0" y2="6" stroke="#c0001e" strokeWidth="2.5"/>
-        </pattern>
-        <pattern id="hatch2" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(-45)">
-          <line x1="0" y1="0" x2="0" y2="6" stroke="#a0001a" strokeWidth="2.5"/>
-        </pattern>
-        <clipPath id={`cc-${w}-${h}`}>
-          <rect width={w} height={h} rx={parseFloat(borderRadius)||8}/>
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#cc-${w}-${h})`}>
-        <rect width={w} height={h} fill="#b0001c"/>
-        <rect width={w} height={h} fill="url(#hatch)" opacity="0.6"/>
-        <rect width={w} height={h} fill="url(#hatch2)" opacity="0.4"/>
-        <rect x="3" y="3" width={w-6} height={h-6} rx="5" fill="none" stroke="#e8192e" strokeWidth="1.5"/>
-        <rect x="6" y="6" width={w-12} height={h-12} rx="3" fill="none" stroke="#e8192e" strokeWidth="0.8" opacity="0.6"/>
-        <polygon points={`${w/2},${h/2-10} ${w/2+8},${h/2} ${w/2},${h/2+10} ${w/2-8},${h/2}`} fill="none" stroke="#ff3a4e" strokeWidth="1.5"/>
-        <polygon points={`${w/2},${h/2-5} ${w/2+4},${h/2} ${w/2},${h/2+5} ${w/2-4},${h/2}`} fill="#e8192e"/>
-        {[[10,10],[w-10,10],[10,h-10],[w-10,h-10]].map(([cx,cy],i) => (
-          <circle key={i} cx={cx} cy={cy} r="2.5" fill="#e8192e"/>
-        ))}
-      </g>
-    </svg>
-  );
-}
-
 export default function Card({
   card, onClick, selected, faceDown, small, large,
   dragging, draggable,
@@ -68,14 +35,18 @@ export default function Card({
   if (faceDown || card?.rank === '?') {
     return (
       <div
-        style={{ ...base, outline: selected ? '2px solid var(--accent)' : 'none', outlineOffset: '2px' }}
+        style={{
+          ...base,
+          backgroundImage: 'url(/images/card-back.webp)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          outline: selected ? '2px solid var(--accent)' : 'none', outlineOffset: '2px'
+        }}
         onClick={onClick}
         draggable={draggable}
         onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
-      >
-        <CardBack width={w} height={h} borderRadius={br}/>
-      </div>
+      />
     );
   }
 

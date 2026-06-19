@@ -44,26 +44,16 @@ function PileCard({ pile }) {
     );
   }
 
-  // Face-down pile using poker back pattern
+  // Face-down pile using the card-back image
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
       <div style={{ position: 'absolute', top: '3px', left: '-3px', width: '44px', height: '64px', borderRadius: '4px', background: '#7a0013', border: '1px solid rgba(0,0,0,0.2)', zIndex: 0 }} />
       <div style={{ position: 'absolute', top: '6px', left: '-6px', width: '44px', height: '64px', borderRadius: '4px', background: '#600010', border: '1px solid rgba(0,0,0,0.2)', zIndex: 0 }} />
-      <svg width="44" height="64" viewBox="0 0 44 64" style={{ position: 'relative', zIndex: 1, borderRadius: '4px', display: 'block', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
-        <defs>
-          <pattern id="ph" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="5" stroke="#c0001e" strokeWidth="2"/>
-          </pattern>
-          <pattern id="ph2" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(-45)">
-            <line x1="0" y1="0" x2="0" y2="5" stroke="#a0001a" strokeWidth="2"/>
-          </pattern>
-        </defs>
-        <rect width="44" height="64" rx="4" fill="#b0001c"/>
-        <rect width="44" height="64" fill="url(#ph)" opacity="0.6"/>
-        <rect width="44" height="64" fill="url(#ph2)" opacity="0.4"/>
-        <rect x="2" y="2" width="40" height="60" rx="3" fill="none" stroke="#e8192e" strokeWidth="1"/>
-        <polygon points="22,26 27,32 22,38 17,32" fill="none" stroke="#ff3a4e" strokeWidth="1"/>
-      </svg>
+      <div style={{
+        position: 'relative', zIndex: 1, width: '44px', height: '64px', borderRadius: '4px',
+        backgroundImage: 'url(/images/card-back.webp)', backgroundSize: 'cover', backgroundPosition: 'center',
+        border: '1px solid rgba(0,0,0,0.3)', boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
+      }} />
     </div>
   );
 }
