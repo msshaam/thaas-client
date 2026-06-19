@@ -31,12 +31,23 @@ function makeSocket(url) {
 }
 
 export default function App() {
-  const [game, setGame] = useState(null); // null | 'digu' | 'dhihaeh'
+  // Decide immediately on first render whether we're rejoining a saved
+  // session, so a page refresh goes straight to "Rejoining…" instead of
+  // flashing the Home screen first.
+  const [game, setGame] = useState(() => {
+    try {
+      if (localStorage.getItem('thaas_dhihaeh_session')) return 'dhihaeh';
+      if (localStorage.getItem('thaas_digu_session')) return 'digu';
+    } catch {}
+    return null;
+  });
 
   // ── Digu state ────────────────────────────────────────────────
   const diGuSocketRef = useRef(null);
   const [diGuConnected, setDigUConnected] = useState(false);
-  const [diGuRejoining, setDigURejoining] = useState(false);
+  const [diGuRejoining, setDigURejoining] = useState(() => {
+    try { return !!localStorage.getItem('thaas_digu_session'); } catch { return false; }
+  });
   const [diGuSession, setDigUSession] = useState(null);
   const [diGuState, setDigUState] = useState(null);
 
@@ -44,7 +55,9 @@ export default function App() {
   // Mirrors Digu exactly: while rejoining, we show a loading screen and
   // wait for fresh server state — no stale "where I left off" flash.
   const dhihaehSocketRef = useRef(null);
-  const [dhihaehRejoining, setDhihaehRejoining] = useState(false);
+  const [dhihaehRejoining, setDhihaehRejoining] = useState(() => {
+    try { return !!localStorage.getItem('thaas_dhihaeh_session'); } catch { return false; }
+  });
   const [dhihaehSession, setDhihaehSession] = useState(null);
   const [dhihaehRoomState, setDhihaehRoomState] = useState(null);
   const [dhihaehGameState, setDhihaehGameState] = useState(null);
