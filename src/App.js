@@ -52,6 +52,10 @@ export default function App() {
   });
   const [diGuSession, setDigUSession] = useState(null);
   const [diGuState, setDigUState] = useState(null);
+  // Always-on chat listener (same pattern as Dhihaeh) — registered at
+  // socket init, not inside ChatPanel, to avoid dropping history that
+  // arrives before the panel has mounted.
+  const [diGuChatMessages, setDigUChatMessages] = useState([]);
 
   // ── Dhihaeh state ─────────────────────────────────────────────
   // Mirrors Digu exactly: while rejoining, we show a loading screen and
@@ -98,9 +102,11 @@ export default function App() {
     });
     socket.on('disconnect', () => setDigUConnected(false));
     socket.on('gameState', (state) => setDigUState(state));
+    socket.on('chatHistory', (history) => setDigUChatMessages(history || []));
+    socket.on('chatMessage', (message) => setDigUChatMessages(prev => [...prev, message]));
     socket.on('roomClosed', () => {
       localStorage.removeItem('thaas_digu_session');
-      setDigUSession(null); setDigUState(null);
+      setDigUSession(null); setDigUState(null); setDigUChatMessages([]);
     });
 
     return () => socket.disconnect();
@@ -216,7 +222,7 @@ export default function App() {
 
   function handleDigULeave() {
     localStorage.removeItem('thaas_digu_session');
-    setDigUSession(null); setDigUState(null);
+    setDigUSession(null); setDigUState(null); setDigUChatMessages([]);
     setGame(null);
   }
 
@@ -259,23 +265,52 @@ export default function App() {
       return <DigULobby socket={socket} onJoined={handleDigUJoined} onBack={goHome} />;
     }
 
+    // From here on, the player is in a room — chat is available alongside
+    // whatever screen they're on (waiting room, mid-game, round end).
+    const chat = (
+      <ChatPanel
+        socket={socket}
+        playerId={diGuSession.playerId}
+        messages={diGuChatMessages}
+        onSend={(text, cb) => socket.emit('sendChatMessage', { roomCode: diGuSession.roomCode, text }, cb)}
+      />
+    );
+
     if (!diGuState) {
       return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0f1e', color: '#8a9bb5', textTransform: 'uppercase' }}>
-          Loading game…
-        </div>
+        <>
+          <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0f1e', color: '#8a9bb5', textTransform: 'uppercase' }}>
+            Loading game…
+          </div>
+          {chat}
+        </>
       );
     }
 
     const { roomCode, playerId, playerName } = diGuSession;
 
     if (diGuState.status === 'waiting') {
-      return <WaitingRoom gameState={diGuState} socket={socket} roomCode={roomCode} playerId={playerId} playerName={playerName} onLeave={handleDigULeave} />;
+      return (
+        <>
+          <WaitingRoom gameState={diGuState} socket={socket} roomCode={roomCode} playerId={playerId} playerName={playerName} onLeave={handleDigULeave} />
+          {chat}
+        </>
+      );
     }
     if (diGuState.status === 'roundEnd' || diGuState.status === 'interrupted') {
-      return <RoundEnd gameState={diGuState} socket={socket} roomCode={roomCode} playerId={playerId} onBackHome={handleDigULeave} />;
+      return (
+        <>
+          <RoundEnd gameState={diGuState} socket={socket} roomCode={roomCode} playerId={playerId} onBackHome={handleDigULeave} />
+          {chat}
+        </>
+      );
     }
-    return <DiGuGameBoard gameState={diGuState} socket={socket} roomCode={roomCode} playerId={playerId} onLeaveConfirmed={handleDigULeave} />;
+    return (
+      <>
+        <DiGuGameBoard gameState={diGuState} socket={socket} roomCode={roomCode} playerId={playerId} onLeaveConfirmed={handleDigULeave} />
+        {chat}
+      </>
+    );
   }
 
   // ── DHIHAEH flow ─────────────────────────────────────────────
