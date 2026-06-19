@@ -1,0 +1,93 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Base */
+  --bg: #0a0f1e;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #1e2d45;
+  --text: #e8e0d4;
+  --muted: #8a9bb5;
+  --radius: 12px;
+
+  /* Shared accent — gold */
+  --accent: #c9a84c;
+  --accent2: #e8c96a;
+
+  /* Alerts / errors */
+  --red: #e05252;
+  --green: #4caf88;
+
+  /* Card */
+  --card-bg: #f8f4ec;
+  --card-border: #d4c9b0;
+
+  /* Mono font */
+  --mono: 'DM Mono', monospace;
+
+  /* Team colors — used by both games */
+  --team1: #3a7bd5;
+  --team2: #e05c3a;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Manrope', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input {
+  font-family: 'Manrope', sans-serif;
+  outline: none;
+}
+
+button, [role="button"], .tap-clean {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+@keyframes cardDeal {
+  from { opacity: 0; transform: translateY(-30px) rotate(-5deg); }
+  to { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 8px var(--accent); }
+  50% { box-shadow: 0 0 20px var(--accent), 0 0 40px rgba(201,168,76,0.3); }
+}
+@keyframes flyCard {
+  from { opacity: 0.95; transform: translate(-50%, -50%) translate(0,0) scale(0.92); }
+  to { opacity: 0; transform: translate(-50%, -50%) translate(var(--fly-x), var(--fly-y)) scale(0.72); }
+}
+@keyframes flipIn {
+  from { transform: rotateY(90deg) scale(0.8); opacity: 0; }
+  to { transform: rotateY(0deg) scale(1); opacity: 1; }
+}
+
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+.slide-up { animation: slideUp 0.4s ease forwards; }
