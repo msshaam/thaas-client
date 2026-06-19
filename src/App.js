@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import './index.css';
 
 import Home from './components/shared/Home';
+import ChatPanel from './components/shared/ChatPanel';
 
 // Digu
 import DigULobby from './components/digu/DigULobby';
@@ -286,27 +287,60 @@ export default function App() {
       return <DhihaehLobby socket={socket} onJoined={handleDhihaehJoined} onBack={goHome} />;
     }
 
+    // From here on, the player is in a room — chat is available alongside
+    // whatever screen they're on (team select, hukun select, mid-game).
+    const chat = (
+      <ChatPanel
+        socket={socket}
+        playerId={dhihaehSession.playerId}
+        onSend={(text, cb) => socket.emit('sendChatMessage', { text }, cb)}
+      />
+    );
+
     if (dhihaehGameState) {
       if (dhihaehGameState.status === 'hukun') {
-        return <HukunSelect gameState={dhihaehGameState} session={dhihaehSession} roomState={dhihaehRoomState} socket={socket} onBack={handleDhihaehBack} />;
+        return (
+          <>
+            <HukunSelect gameState={dhihaehGameState} session={dhihaehSession} roomState={dhihaehRoomState} socket={socket} onBack={handleDhihaehBack} />
+            {chat}
+          </>
+        );
       }
       if (dhihaehGameState.status === 'playing' || dhihaehGameState.status === 'ended') {
-        return <DhihaehGameBoard gameState={dhihaehGameState} session={dhihaehSession} roomState={dhihaehRoomState} socket={socket} onBack={handleDhihaehBack} />;
+        return (
+          <>
+            <DhihaehGameBoard gameState={dhihaehGameState} session={dhihaehSession} roomState={dhihaehRoomState} socket={socket} onBack={handleDhihaehBack} />
+            {chat}
+          </>
+        );
       }
       if (dhihaehGameState.status === 'interrupted') {
-        return <Interrupted gameState={dhihaehGameState} session={dhihaehSession} roomState={dhihaehRoomState} socket={socket} onBack={handleDhihaehBack} />;
+        return (
+          <>
+            <Interrupted gameState={dhihaehGameState} session={dhihaehSession} roomState={dhihaehRoomState} socket={socket} onBack={handleDhihaehBack} />
+            {chat}
+          </>
+        );
       }
     }
 
     if (dhihaehRoomState) {
-      return <TeamSelect roomState={dhihaehRoomState} session={dhihaehSession} onBack={handleDhihaehBack} socket={socket} />;
+      return (
+        <>
+          <TeamSelect roomState={dhihaehRoomState} session={dhihaehSession} onBack={handleDhihaehBack} socket={socket} />
+          {chat}
+        </>
+      );
     }
 
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0f1e', color: '#8a9bb5', gap: 16 }}>
-        <div style={{ fontSize: 40 }}>🃏</div>
-        <p style={{ fontSize: 14, textTransform: 'uppercase', animation: 'pulse 1.5s infinite' }}>Connecting…</p>
-      </div>
+      <>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0f1e', color: '#8a9bb5', gap: 16 }}>
+          <div style={{ fontSize: 40 }}>🃏</div>
+          <p style={{ fontSize: 14, textTransform: 'uppercase', animation: 'pulse 1.5s infinite' }}>Connecting…</p>
+        </div>
+        {chat}
+      </>
     );
   }
 
