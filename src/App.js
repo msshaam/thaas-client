@@ -98,6 +98,13 @@ export default function App() {
     socket.on('hukunRevealed', () => {});
     socket.on('roundComplete', () => {});
 
+    // The moment we know the connection dropped, hide the stale board
+    // immediately — don't wait for the reconnect handshake to finish.
+    socket.on('disconnect', () => {
+      const saved = localStorage.getItem('thaas_dhihaeh_session');
+      if (saved) setDhihaehRejoining(true);
+    });
+
     // Rejoin on every connect (covers refresh + reconnect after drop).
     // We deliberately show a loading screen during this — no stale board.
     socket.on('connect', () => {
@@ -124,12 +131,29 @@ export default function App() {
       }
     });
 
+    // Browsers/mobile often suspend the websocket while a tab is backgrounded
+    // without firing 'disconnect' until you return. So when the tab becomes
+    // visible again, check right away and force a reconnect ourselves instead
+    // of waiting for socket.io's own (possibly delayed) detection.
+    function handleVisibility() {
+      if (document.visibilityState !== 'visible') return;
+      const saved = localStorage.getItem('thaas_dhihaeh_session');
+      if (!saved) return;
+      if (!socket.connected) {
+        setDhihaehRejoining(true);
+        socket.connect();
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+
     // Connect if we have a saved session
     const saved = localStorage.getItem('thaas_dhihaeh_session');
     if (saved) { setDhihaehRejoining(true); socket.connect(); }
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
       socket.off('connect');
+      socket.off('disconnect');
       socket.off('roomUpdate');
       socket.off('gameState');
       socket.off('gameStarted');
